@@ -1,0 +1,34 @@
+---
+
+###gcp-instances-fixes###
+
+# NOTA: estos fixes son por problemas que hemos tenido con las instancias en GCP en diferentes situacion como despues de reiniciar, conectarse mucho por SSH, etc.
+
+# Fix para problema de SSH timeout en instancias GCP debido al sshguard
+
+- name: "Fix SSH timeout - Stop sshguard service"
+  become: yes #sudo
+  service:
+    name: sshguard
+    state: stopped
+    enabled: "{{gcp_inst_fix_ssh_sshguard_enabled}}"
+
+# Fix para problema de read only filesystem  en instancias GCP
+
+- 
+  name: "Fix RO filesystem - Remount filesystem with read-write mode"
+  mount:
+    src: "{{gcp_inst_fix_rofs_src}}"
+    path: "{{gcp_inst_fix_rofs_path}}"
+    fstype: "{{gcp_inst_fix_rofs_fstype}}"
+    opts: remount,rw
+    state: mounted
+
+# Fix para problema de falla de resolucion de dominios DNS en instancias GCP
+
+- 
+  name: "Fix DNS resolution fail - Enable and Restart service 'systemd-resolved' (DNS)"
+  systemd:
+    name: systemd-resolved
+    state: restarted
+    enabled: "{{gcp_inst_fix_ssh_sd_resolved_enabled}}"

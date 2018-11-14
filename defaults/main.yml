@@ -1,0 +1,8 @@
+---
+
+gcp_inst_fix_rofs_src: "/dev/sda1"
+gcp_inst_fix_rofs_path: "/"
+gcp_inst_fix_rofs_fstype: "ext4"
+
+gcp_inst_fix_ssh_sshguard_enabled: "no"
+gcp_inst_fix_ssh_sd_resolved_enabled: "yes"
