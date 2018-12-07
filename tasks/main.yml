@@ -4,34 +4,8 @@
 
 # NOTA: estos fixes son por problemas que hemos tenido con las instancias en GCP en diferentes situacion como despues de reiniciar, conectarse mucho por SSH, etc.
 
-# Fix para problema de SSH timeout en instancias GCP debido al sshguard
-
-- name: "Fix SSH timeout - Stop and Disable sshguard service"
-  become: yes #sudo
-  service:
-    name: sshguard
-    state: stopped
-    enabled: "{{gcp_inst_fix_ssh_sshguard_enabled}}"
-  when:
-    - gcp_inst_fix_sshguard_timeout is defined
-    - gcp_inst_fix_sshguard_timeout == true
-
--
-  name: "Fix SSH timeout - Schedule Stop and Disable sshguard service at Reboot"
-  become: yes #sudo
-  cron:
-    name: gcp-sshguard-timeout-fix
-    state: present
-    special_time: reboot
-    job: systemctl disable sshguard; systemctl stop sshguard; 
-  when:
-    - gcp_inst_fix_sshguard_timeout is defined
-    - gcp_inst_fix_sshguard_timeout == true
-    - gcp_inst_fix_sshguard_timeout_schedule is defined
-    - gcp_inst_fix_sshguard_timeout_schedule == true
-
-
 # Fix para problema de read only filesystem  en instancias GCP
+# NOTA: esto se debe ejecutar antes que todo lo demas porque sino falla todo.
 
 - 
   name: "Fix RO filesystem - Remount filesystem with read-write mode"
@@ -53,12 +27,41 @@
     name: gcp-readonly-filesystem-fix
     state: present
     special_time: reboot
-    job: mount -o remount,rw /
+    job: "sleep {{gcp_inst_fix_readonly_filesystem_sleep}}; mount -o remount,rw / ;"
   when:
     - gcp_inst_fix_readonly_filesystem is defined
     - gcp_inst_fix_readonly_filesystem == true
     - gcp_inst_fix_readonly_filesystem_schedule is defined
     - gcp_inst_fix_readonly_filesystem_schedule == true
+
+
+
+# Fix para problema de SSH timeout en instancias GCP debido al sshguard
+
+- name: "Fix SSH timeout - Stop and Disable sshguard service"
+  become: yes #sudo
+  service:
+    name: sshguard
+    state: stopped
+    enabled: "{{gcp_inst_fix_ssh_sshguard_enabled}}"
+  when:
+    - gcp_inst_fix_sshguard_timeout is defined
+    - gcp_inst_fix_sshguard_timeout == true
+
+-
+  name: "Fix SSH timeout - Schedule Stop and Disable sshguard service at Reboot"
+  become: yes #sudo
+  cron:
+    name: gcp-sshguard-timeout-fix
+    state: present
+    special_time: reboot
+    job: "sleep {{gcp_inst_fix_sshguard_timeout_sleep}}; systemctl disable sshguard; systemctl stop sshguard;"
+  when:
+    - gcp_inst_fix_sshguard_timeout is defined
+    - gcp_inst_fix_sshguard_timeout == true
+    - gcp_inst_fix_sshguard_timeout_schedule is defined
+    - gcp_inst_fix_sshguard_timeout_schedule == true
+
 
 
 # Fix para problema de falla de resolucion de dominios DNS en instancias GCP
@@ -81,7 +84,7 @@
     name: gcp-dns-resolution-fail-fix
     state: present
     special_time: reboot
-    job: systemctl enable systemd-resolved; systemctl restart systemd-resolved; 
+    job: "sleep {{gcp_inst_fix_dns_resolution_fail_sleep}}; systemctl enable systemd-resolved; systemctl restart systemd-resolved;"
   when:
     - gcp_inst_fix_dns_resolution_fail is defined
     - gcp_inst_fix_dns_resolution_fail == true

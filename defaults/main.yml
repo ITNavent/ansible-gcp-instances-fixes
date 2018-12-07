@@ -1,13 +1,21 @@
 ---
 
-gcp_inst_fix_sshguard_timeout: yes
+# NOTA: todos los fixes se registran en cron por default para ejecutarse en el reboot.
+# NOTA2: los sleep sirven para ejecutar los fixes con retardo despues del reboot y darles cierto orden si es necesario.
+
 gcp_inst_fix_readonly_filesystem: yes
+gcp_inst_fix_sshguard_timeout: yes
 gcp_inst_fix_dns_resolution_fail: yes
 
-gcp_inst_fix_sshguard_timeout_schedule: yes
 gcp_inst_fix_readonly_filesystem_schedule: yes
+gcp_inst_fix_sshguard_timeout_schedule: yes
 gcp_inst_fix_dns_resolution_fail_schedule: yes
 
+gcp_inst_fix_readonly_filesystem_sleep: 0 # este se debe ejecutar antes que los demas
+gcp_inst_fix_sshguard_timeout_sleep: 60
+gcp_inst_fix_dns_resolution_fail_sleep: 60
+
+# fixes-config
 gcp_inst_fix_rofs_src: "/dev/sda1"
 gcp_inst_fix_rofs_path: "/"
 gcp_inst_fix_rofs_fstype: "ext4"
