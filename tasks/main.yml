@@ -6,6 +6,7 @@
 
 # Fix para problema de read only filesystem  en instancias GCP
 # NOTA: esto se debe ejecutar antes que todo lo demas porque sino falla todo.
+# NOTA2: de esta operacion 1ro se guarda un log en memoria y despues desde ahi se guarda en el sistema de archivos, ya que sino fallaria si el sistema de archivos esta en modo Read Only.
 
 - 
   name: "Fix RO filesystem - Remount filesystem with read-write mode"
@@ -27,7 +28,7 @@
     name: gcp-readonly-filesystem-fix
     state: present
     special_time: reboot
-    job: "sleep {{gcp_inst_fix_readonly_filesystem_sleep}}; mount -o remount,rw / ;"
+    job: sleep {{gcp_inst_fix_readonly_filesystem_sleep}}; NAVENT_LOG_CRON_SCHEDULE_READONLY_FILESYSTEM_FIX=`mount -v -o remount,rw /`; echo $NAVENT_LOG_CRON_SCHEDULE_READONLY_FILESYSTEM_FIX > "/tmp/schedule-gcp-readonly-filesystem-fix-`date +%Y-%m-%d-%H-%M-%S`.log";
   when:
     - gcp_inst_fix_readonly_filesystem is defined
     - gcp_inst_fix_readonly_filesystem == true

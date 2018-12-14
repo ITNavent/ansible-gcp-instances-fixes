@@ -3,6 +3,8 @@ GCP-Instances-Fixes
 
 Este es un role para arreglar problemas usuales con las instancias en GCP en diferentes situaciones como despues de reiniciar, conectarse mucho por SSH, etc. Son fixes a nivel sistema operativo y es recomendable aplicarlos por las dudas despues de reiniciar una instancia GCP. Este Role ademas programa tareas cron para que cada fix se vuelva a aplica al reiniciar las instancias.
 
+El "Fix RO filesystem" deja un log en la env var "NAVENT_LOG_CRON_SCHEDULE_READONLY_FILESYSTEM_FIX" ademas de grabar un log en /tmp/.
+
 Requirements
 ------------
 
