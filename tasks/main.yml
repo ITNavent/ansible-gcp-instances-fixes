@@ -5,8 +5,9 @@
 # NOTA: estos fixes son por problemas que hemos tenido con las instancias en GCP en diferentes situacion como despues de reiniciar, conectarse mucho por SSH, etc.
 
 # Fix para problema de read only filesystem  en instancias GCP
-# NOTA: esto se debe ejecutar antes que todo lo demas porque sino falla todo.
-# NOTA2: de esta operacion 1ro se guarda un log en memoria y despues desde ahi se guarda en el sistema de archivos, ya que sino fallaria si el sistema de archivos esta en modo Read Only.
+# NOTA: puede confundir un poco las redireccion a logs en el cron, pero basicamente ejecuta: mount -v -o remount,rw /
+# NOTA2: esto se debe ejecutar antes que todo lo demas porque sino falla todo.
+# NOTA3: de esta operacion 1ro se guarda un log en memoria y despues desde ahi se guarda en el sistema de archivos, ya que sino fallaria si el sistema de archivos esta en modo Read Only.
 
 - 
   name: "Fix RO filesystem - Remount filesystem with read-write mode"
@@ -28,16 +29,25 @@
     name: gcp-readonly-filesystem-fix
     state: present
     special_time: reboot
-    job: sleep {{gcp_inst_fix_readonly_filesystem_sleep}}; NAVENT_LOG_CRON_SCHEDULE_READONLY_FILESYSTEM_FIX=`mount -v -o remount,rw /`; echo $NAVENT_LOG_CRON_SCHEDULE_READONLY_FILESYSTEM_FIX > "/tmp/schedule-gcp-readonly-filesystem-fix-`date +%Y-%m-%d-%H-%M-%S`.log";
+    job: sleep {{gcp_inst_fix_readonly_filesystem_sleep}}; NAVENT_LOG_SCHEDULE_READONLY_FILESYSTEM_FIX=`mount -v -o remount,rw / 2>&1`; echo $NAVENT_LOG_SCHEDULE_READONLY_FILESYSTEM_FIX > "/tmp/schedule-gcp-readonly-filesystem-fix-`date +%Y-%m-%d-%H-%M-%S`.log";
   when:
     - gcp_inst_fix_readonly_filesystem is defined
     - gcp_inst_fix_readonly_filesystem == true
     - gcp_inst_fix_readonly_filesystem_schedule is defined
     - gcp_inst_fix_readonly_filesystem_schedule == true
 
+- 
+  name: "Fix RO filesystem - Add /etc/fstab line"
+  lineinfile:
+    path: /etc/fstab
+    line: "/dev/sda1 / ext4 remount,rw 0 0"
+    create: yes
+
+
 
 
 # Fix para problema de SSH timeout en instancias GCP debido al sshguard
+# NOTA: puede confundir un poco las redireccion a logs en el cron, pero basicamente ejecuta: systemctl disable sshguard; systemctl stop sshguard;
 
 - name: "Fix SSH timeout - Stop and Disable sshguard service"
   become: yes #sudo
@@ -56,7 +66,7 @@
     name: gcp-sshguard-timeout-fix
     state: present
     special_time: reboot
-    job: "sleep {{gcp_inst_fix_sshguard_timeout_sleep}}; systemctl disable sshguard; systemctl stop sshguard;"
+    job: sleep {{gcp_inst_fix_sshguard_timeout_sleep}}; NAVENT_LOG_SCHEDULE_SSH_TIMEOUT_FIX=`systemctl disable sshguard 2>&1`; NAVENT_LOG_SCHEDULE_SSH_TIMEOUT_FIX+=`systemctl stop sshguard 2>&1`; echo $NAVENT_LOG_SCHEDULE_SSH_TIMEOUT_FIX > "/tmp/schedule-gcp-sshguard-timeout-fix-`date +%Y-%m-%d-%H-%M-%S`.log";
   when:
     - gcp_inst_fix_sshguard_timeout is defined
     - gcp_inst_fix_sshguard_timeout == true
@@ -66,6 +76,7 @@
 
 
 # Fix para problema de falla de resolucion de dominios DNS en instancias GCP
+# NOTA: puede confundir un poco las redireccion a logs en el cron, pero basicamente ejecuta: systemctl enable systemd-resolved; systemctl restart systemd-resolved;
 
 - 
   name: "Fix DNS resolution fail - Enable and Restart service 'systemd-resolved' (DNS)"
@@ -85,7 +96,7 @@
     name: gcp-dns-resolution-fail-fix
     state: present
     special_time: reboot
-    job: "sleep {{gcp_inst_fix_dns_resolution_fail_sleep}}; systemctl enable systemd-resolved; systemctl restart systemd-resolved;"
+    job: sleep {{gcp_inst_fix_dns_resolution_fail_sleep}}; NAVENT_LOG_SCHEDULE_DNS_RES_FAIL_FIX=`systemctl enable systemd-resolved 2>&1`; NAVENT_LOG_SCHEDULE_DNS_RES_FAIL_FIX+=`systemctl restart systemd-resolved 2>&1`; echo $NAVENT_LOG_SCHEDULE_DNS_RES_FAIL_FIX > "/tmp/schedule-gcp-dns-resolution-fail-fix-`date +%Y-%m-%d-%H-%M-%S`.log";
   when:
     - gcp_inst_fix_dns_resolution_fail is defined
     - gcp_inst_fix_dns_resolution_fail == true
