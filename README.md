@@ -5,6 +5,10 @@ Este es un role para arreglar problemas usuales con las instancias en GCP en dif
 
 El "Fix RO filesystem" deja un log en la env var "NAVENT_LOG_CRON_SCHEDULE_READONLY_FILESYSTEM_FIX" ademas de grabar un log en /tmp/.
 
+
+| :warning: | WARNING: este Ansible Role fue creado con fines específicos dentro de la empresa Navent y no esta pensando para un uso general. |
+| --- | --- |
+
 Requirements
 ------------
 
