@@ -6,14 +6,17 @@
 gcp_inst_fix_readonly_filesystem: yes
 gcp_inst_fix_sshguard_timeout: yes
 gcp_inst_fix_dns_resolution_fail: yes
+gcp_inst_fix_dpkg_apt_hang: yes
 
 gcp_inst_fix_readonly_filesystem_schedule: yes
 gcp_inst_fix_sshguard_timeout_schedule: yes
 gcp_inst_fix_dns_resolution_fail_schedule: yes
+gcp_inst_fix_dpkg_apt_hang_schedule: yes
 
 gcp_inst_fix_readonly_filesystem_sleep: 0 # este se debe ejecutar antes que los demas
 gcp_inst_fix_sshguard_timeout_sleep: 60
 gcp_inst_fix_dns_resolution_fail_sleep: 60
+gcp_inst_fix_dpkg_apt_hang_sleep: 120
 
 # fixes-config
 gcp_inst_fix_rofs_src: "/dev/sda1"

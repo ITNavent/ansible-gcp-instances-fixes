@@ -3,6 +3,7 @@
 ###gcp-instances-fixes###
 
 # NOTA: estos fixes son por problemas que hemos tenido con las instancias en GCP en diferentes situacion como despues de reiniciar, conectarse mucho por SSH, etc.
+# NOTA2: trato de siemrpe guardar el log en un envar y despues guardarla en el disco duro, ya que peude psar que se eliminen los archivos de logs o que directamente no se grabe por alguna falla como que este en modo "read-only". Estas variables se pisan en cada reinicio de la maquina.
 
 # Fix para problema de read only filesystem  en instancias GCP
 # NOTA: puede confundir un poco las redireccion a logs en el cron, pero basicamente ejecuta: mount -v -o remount,rw /
@@ -21,6 +22,8 @@
   when:
     - gcp_inst_fix_readonly_filesystem is defined
     - gcp_inst_fix_readonly_filesystem == true
+  ignore_errors: true # ignora errores de la tarea
+  failed_when: false # no marca como "failed" si falla
 
 -
   name: "Fix RO filesystem - Schedule Remount filesystem with read-write mode at Reboot"
@@ -35,6 +38,8 @@
     - gcp_inst_fix_readonly_filesystem == true
     - gcp_inst_fix_readonly_filesystem_schedule is defined
     - gcp_inst_fix_readonly_filesystem_schedule == true
+  ignore_errors: true # ignora errores de la tarea
+  failed_when: false # no marca como "failed" si falla
 
 - 
   name: "Fix RO filesystem - Add /etc/fstab line"
@@ -42,7 +47,8 @@
     path: /etc/fstab
     line: "/dev/sda1 / ext4 remount,rw 0 0"
     create: yes
-
+  ignore_errors: true # ignora errores de la tarea
+  failed_when: false # no marca como "failed" si falla
 
 
 
@@ -58,6 +64,8 @@
   when:
     - gcp_inst_fix_sshguard_timeout is defined
     - gcp_inst_fix_sshguard_timeout == true
+  ignore_errors: true # ignora errores de la tarea
+  failed_when: false # no marca como "failed" si falla
 
 -
   name: "Fix SSH timeout - Schedule Stop and Disable sshguard service at Reboot"
@@ -72,6 +80,8 @@
     - gcp_inst_fix_sshguard_timeout == true
     - gcp_inst_fix_sshguard_timeout_schedule is defined
     - gcp_inst_fix_sshguard_timeout_schedule == true
+  ignore_errors: true # ignora errores de la tarea
+  failed_when: false # no marca como "failed" si falla
 
 
 
@@ -88,6 +98,8 @@
   when:
     - gcp_inst_fix_dns_resolution_fail is defined
     - gcp_inst_fix_dns_resolution_fail == true
+  ignore_errors: true # ignora errores de la tarea
+  failed_when: false # no marca como "failed" si falla
 
 -
   name: "Fix DNS resolution fail - Schedule Enable and Restart service 'systemd-resolved' (DNS) at Reboot"
@@ -102,5 +114,41 @@
     - gcp_inst_fix_dns_resolution_fail == true
     - gcp_inst_fix_dns_resolution_fail_schedule is defined
     - gcp_inst_fix_dns_resolution_fail_schedule == true
+  ignore_errors: true # ignora errores de la tarea
+  failed_when: false # no marca como "failed" si falla
 
 
+# Fix para problema de freeze de procesos de apt y dpkg debido a diferentes motivos, pero el mas comun es alguna instalacion interactiva que haya quedado corriendo en background.
+# NOTA: puede confundir un poco las redireccion a logs en el cron, pero basicamente ejecuta 3 comandos: 
+#       sudo killall --verbose --regexp '^apt.*'
+#       sudo killall --verbose --regexp '^dpkg.*'
+#       sudo UCF_FORCE_CONFOLD=1 DEBIAN_FRONTEND=noninteractive dpkg --configure -a --force-confdef --force-confold
+
+- 
+  name: "Fix DPKG/APT hang - Stop DPKG/APT process and reconfigure DPKG"
+  become: yes #sudo
+  command: "{{item}}"
+  with_items: 
+    - "killall --regexp '^apt.*'"
+    - "killall --regexp '^dpkg.*'"
+    - "UCF_FORCE_CONFOLD=1 DEBIAN_FRONTEND=noninteractive dpkg --configure -a --force-confdef --force-confold"
+  when:
+    - gcp_inst_fix_dpkg_apt_hang is defined
+    - gcp_inst_fix_dpkg_apt_hang == true
+  ignore_errors: true # ignora errores de la tarea
+  failed_when: false # no marca como "failed" si falla
+
+- name: "Fix DPKG/APT hang - Schedule stop DPKG/APT process and reconfigure DPKG at Reboot"
+  become: yes #sudo
+  cron:
+    name: gcp-dpkg-apt-hang-fix
+    state: present
+    special_time: reboot
+    job: sleep {{gcp_inst_fix_dpkg_apt_hang_sleep}}; NAVENT_LOG_SCHEDULE_DPKG_APT_HANG_FIX=`killall --verbose --regexp '^apt.*'` ; NAVENT_LOG_SCHEDULE_DPKG_APT_HANG_FIX+=`killall --verbose --regexp '^dpkg.*'` ; NAVENT_LOG_SCHEDULE_DPKG_APT_HANG_FIX+=`UCF_FORCE_CONFOLD=1 DEBIAN_FRONTEND=noninteractive dpkg --configure -a --force-confdef --force-confold 2>&1`; echo $NAVENT_LOG_SCHEDULE_DPKG_APT_HANG_FIX > "/tmp/schedule-gcp-dpkg-apt-hang-fix-`date +%Y-%m-%d-%H-%M-%S`.log";
+  when:
+    - gcp_inst_fix_dpkg_apt_hang is defined
+    - gcp_inst_fix_dpkg_apt_hang == true
+    - gcp_inst_fix_dpkg_apt_hang_schedule is defined
+    - gcp_inst_fix_dpkg_apt_hang_schedule == true
+  ignore_errors: true # ignora errores de la tarea
+  failed_when: false # no marca como "failed" si falla
